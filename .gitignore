@@ -1,0 +1,70 @@
+# -------------------------------------------------------------------------
+# Neuroimaging data
+# -------------------------------------------------------------------------
+*.nii
+*.nii.gz
+*.mgz
+*.mgh
+
+# BIDS datasets and derivatives
+bids/
+derivatives/
+output/
+outputs/
+
+# fMRIPrep / Nipype working directories
+work/
+work_*/
+crash-*
+crashdump/
+
+# FreeSurfer data and licenses
+freesurfer/
+*.license
+
+# -------------------------------------------------------------------------
+# HPC / SLURM artifacts
+# -------------------------------------------------------------------------
+slurm-*.out
+slurm-*.err
+marss_*.out
+marss_*.err
+
+# -------------------------------------------------------------------------
+# Python
+# -------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# -------------------------------------------------------------------------
+# Editors / operating systems
+# -------------------------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# -------------------------------------------------------------------------
+# Temporary / development files
+# -------------------------------------------------------------------------
+*.tmp
+*.bak
+*.swp
+*~
+dev_scratch/
+
+# Local validation / upstream baseline
+baseline/
+patch-test/
+
+# Local historical research artifacts
+historical/

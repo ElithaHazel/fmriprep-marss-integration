@@ -1,0 +1,177 @@
+--- /dev/null
++++ b/fmriprep/workflows/bold/marss.py
+@@ -0,0 +1,174 @@
++import os
++# fmriprep/workflows/bold/marss.py
++from nipype.pipeline.engine import Workflow, Node
++from nipype.interfaces.utility import Function, IdentityInterface
++import os, shutil
++
++# Try to import the real MARSS entry point from the cloned repo
++try:
++    # Repo path: ~/Libraries/MARSS/python/src/MARSS/MARSS.py
++    from MARSS.MARSS import MARSS_main
++    print("[MARSS] Successfully imported MARSS_main from MARSS.MARSS")
++    USE_REAL_MARSS = True
++except Exception as e:
++    print("[MARSS] Could not import MARSS_main:", e)
++    USE_REAL_MARSS = False
++
++# def marss_apply(in_file, MB=8):
++#     """
++#     Run MARSS_main on a BOLD time series.
++#     Inputs:
++#       in_file: path to .nii or .nii.gz 4D BOLD
++#       MB: multiband factor (adjust for your dataset)
++#     Output:
++#       marss_bold.nii.gz in a subfolder 'marss_output'
++#     """
++#     out_dir = os.path.abspath("marss_output")
++#     os.makedirs(out_dir, exist_ok=True)
++#     out_file = os.path.join(out_dir, "marss_bold.nii.gz")
++
++#     if USE_REAL_MARSS:
++#         print(f"[MARSS] Running MARSS_main on: {in_file}  (MB={MB})")
++#         try:
++#             # Signature observed in MARSS repo: MARSS_main(timeSeriesFile, MB, workingDir, *args)
++#             MARSS_main(in_file, MB, out_dir)
++
++#             # Move one produced NIfTI to the standard name if needed
++#             produced = [f for f in os.listdir(out_dir) if f.endswith((".nii", ".nii.gz"))]
++#             if produced:
++#                 # Take the first nii/niigz produced
++#                 shutil.move(os.path.join(out_dir, produced[0]), out_file)
++#             else:
++#                 # If nothing produced, keep original (fail-safe)
++#                 shutil.copy2(in_file, out_file)
++#         except Exception as e:
++#             print("[MARSS] MARSS_main failed:", e)
++#             shutil.copy2(in_file, out_file)
++#     else:
++#         print("[MARSS] MARSS package not available; passthrough copy.")
++#         shutil.copy2(in_file, out_file)
++
++#     return out_file
++
++def marss_apply(in_file, MB):
++    """
++    Run MARSS_main on a BOLD time series.
++
++    Inputs:
++      in_file: path to .nii or .nii.gz 4D BOLD
++      MB: multiband factor (adjust for your dataset)
++    Output:
++      marss_bold.nii.gz in a subfolder 'marss_output'
++    """
++    # Local imports so Nipype's Function can see everything
++    import os
++    import re
++    import shutil
++    from pathlib import Path
++
++    try:
++        from MARSS.MARSS import MARSS_main
++        use_real_marss = True
++        print("[MARSS] Using MARSS_main from MARSS.MARSS")
++    except Exception as e:
++        print("[MARSS] Could not import MARSS_main, passthrough mode:", e)
++        use_real_marss = False
++
++    out_dir = os.path.abspath("marss_output")
++    os.makedirs(out_dir, exist_ok=True)
++    out_file = os.path.join(out_dir, "marss_bold.nii.gz")
++
++    if use_real_marss:
++        print(f"[MARSS] Running MARSS_main on: {in_file}  (MB={MB})")
++        try:
++            # MARSS_main(timeSeriesFile, MB, workingDir, *args)
++            MARSS_main(in_file, MB, out_dir)
++
++            # Move one produced NIfTI to the standard name if needed
++            produced = [
++                f for f in os.listdir(out_dir)
++                if f.endswith(".nii") or f.endswith(".nii.gz")
++            ]
++            if produced:
++                shutil.move(os.path.join(out_dir, produced[0]), out_file)
++            else:
++                print("[MARSS] No NIfTI produced, copying input instead.")
++                shutil.copy2(in_file, out_file)
++        except Exception as e:
++            print("[MARSS] MARSS_main failed:", e)
++            shutil.copy2(in_file, out_file)
++    else:
++        print("[MARSS] MARSS package not available; passthrough copy.")
++        shutil.copy2(in_file, out_file)
++
++    # --- MARSS Derivatives Output (CNaP Lab) ---
++    # Save a run-wise copy of the MARSS output under the fMRIPrep derivatives
++    # directory while preserving the internal workflow output path.
++    try:
++        from fmriprep import config
++
++        src_path = Path(in_file)
++        out_path = Path(out_file)
++
++        # Try to get subject ID from path parts first, then filename
++        subject = next((part for part in src_path.parts if part.startswith("sub-")), None)
++        if subject is None:
++            subj_match = re.search(r"(sub-[^_]+)", src_path.name)
++            subject = subj_match.group(1) if subj_match else "sub-unknown"
++
++        # Extract run label from filename
++        run_match = re.search(r"(run-[^_]+)", src_path.name)
++        run_label = run_match.group(1) if run_match else "run-unknown"
++
++        # this is th original code
++        #derivatives_root = Path(config.execution.fmriprep_dir)
++        #marss_run_dir = derivatives_root / subject / "func" / f"MARSS_{run_label}"
++
++        #changing it just to check the code locally (this part is being changed!)
++        derivatives_root_raw = config.execution.fmriprep_dir
++
++        if derivatives_root_raw is None:
++            # Fallback for dev_check_marss.py or other dev-only runs
++            derivatives_root = Path(os.path.abspath("dev_scratch/dev_derivatives"))
++            print(f"[MARSS] fMRIPrep derivatives dir not set; using dev fallback: {derivatives_root}")
++        else:
++            derivatives_root = Path(derivatives_root_raw)
++
++        marss_run_dir = derivatives_root / subject / "func" / f"MARSS_{run_label}"
++        
++        # this is th original code
++        marss_run_dir.mkdir(parents=True, exist_ok=True)
++
++        # Keep the original input filename for the derivatives copy
++        derivative_copy = marss_run_dir / src_path.name
++        shutil.copy2(out_path, derivative_copy)
++
++        print(f"[MARSS] Saved derivatives copy to: {derivative_copy}")
++
++    except Exception as e:
++        print(f"[MARSS] Could not save derivatives copy: {e}")
++
++    return out_file
++
++
++def init_marss_wf(MB,name="marss_wf"):
++    wf = Workflow(name=name)
++    inputnode = Node(IdentityInterface(fields=["bold_file"]), name="inputnode")
++
++    node = Node(
++        Function(
++            input_names=["in_file", "MB"],
++            output_names=["out_file"],
++            function=marss_apply,
++        ),
++        name="marss_node",
++    )
++    node.inputs.MB = MB
++
++    outputnode = Node(IdentityInterface(fields=["marss_bold_file"]), name="outputnode")
++
++    wf.connect([
++        (inputnode, node, [("bold_file", "in_file")]),
++        (node, outputnode, [("out_file", "marss_bold_file")]),
++    ])
++    return wf

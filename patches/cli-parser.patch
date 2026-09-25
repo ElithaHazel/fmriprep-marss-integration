@@ -1,0 +1,35 @@
+--- a/fmriprep/cli/parser.py
++++ b/fmriprep/cli/parser.py
+@@ -234,6 +234,22 @@
+         help="Raise an error if ICA_AROMA does not produce sensible output "
+         "(e.g., if all the components are classified as signal or noise)",
+     )
++
++    g_perfm.add_argument(
++        "--use-marss",
++        action="store_true",
++        default=False,
++        help="Enable MARSS preprocessing before motion correction.",
++    )
++
++    g_perfm.add_argument(
++        "--marss-mb",
++        dest="marss_mb",
++        type=int,
++        default=None,
++        help="Multiband factor for MARSS. Required when --use-marss is enabled.",
++    )
++
+     g_perfm.add_argument(
+         "-v",
+         "--verbose",
+@@ -610,6 +626,9 @@
+     config.execution.log_level = int(max(25 - 5 * opts.verbose_count, logging.DEBUG))
+     config.from_dict(vars(opts))
+ 
++    if config.workflow.use_marss and config.workflow.marss_mb is None:
++        raise ValueError("When --use-marss is set, --marss-mb must be provided.")
++
+     if not config.execution.notrack:
+         try:
+             import sentry_sdk

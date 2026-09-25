@@ -1,0 +1,45 @@
+--- a/fmriprep/workflows/bold/base.py
++++ b/fmriprep/workflows/bold/base.py
+@@ -28,6 +28,7 @@
+ # BOLD workflows
+ from .confounds import init_bold_confs_wf, init_carpetplot_wf
+ from .hmc import init_bold_hmc_wf
++from .marss import init_marss_wf
+ from .stc import init_bold_stc_wf
+ from .t2s import init_bold_t2s_wf
+ from .registration import init_bold_t1_trans_wf, init_bold_reg_wf
+@@ -336,6 +337,13 @@
+                                    mem_gb=mem_gb['filesize'],
+                                    omp_nthreads=omp_nthreads)
+ 
++    # MARSS optional preprocessing before HMC
++    if config.workflow.use_marss:
++        marss_wf = init_marss_wf(
++            MB=config.workflow.marss_mb,
++            name='bold_marss_wf',
++        )
++
+     # calculate BOLD registration to T1w
+     bold_reg_wf = init_bold_reg_wf(
+         bold2t1w_dof=config.workflow.bold2t1w_dof,
+@@ -444,11 +452,17 @@
+         (inputnode, t1w_brain, [('t1w_preproc', 'in_file'),
+                                 ('t1w_mask', 'in_mask')]),
+         # BOLD buffer has slice-time corrected if it was run, original otherwise
+-        (boldbuffer, bold_split, [('bold_file', 'in_file')]),
++        (boldbuffer, marss_wf, [('bold_file', 'inputnode.bold_file')]),
++        (marss_wf if config.workflow.use_marss else boldbuffer,
++            bold_split,
++            [('outputnode.marss_bold_file' if config.workflow.use_marss else 'bold_file', 'in_file')]),
+         # HMC
+         (initial_boldref_wf, bold_hmc_wf, [
+-            ('outputnode.raw_ref_image', 'inputnode.raw_ref_image'),
+-            ('outputnode.bold_file', 'inputnode.bold_file')]),
++            ('outputnode.raw_ref_image', 'inputnode.raw_ref_image')]),
++        (marss_wf if config.workflow.use_marss else initial_boldref_wf,
++            bold_hmc_wf,
++            [('outputnode.marss_bold_file' if config.workflow.use_marss else 'outputnode.bold_file',
++                'inputnode.bold_file')]),
+         (initial_boldref_wf, summary, [
+             ('outputnode.algo_dummy_scans', 'algo_dummy_scans')]),
+         # EPI-T1 registration workflow
