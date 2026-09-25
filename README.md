@@ -424,6 +424,18 @@ fMRIPrep and Nipype are open-source neuroimaging projects maintained by their re
 
 ---
 
+## Attribution and Licensing
+
+This integration was developed against **fMRIPrep 20.2.3**. The files under `patches/` represent modifications relative to that upstream version and may include contextual portions of fMRIPrep source code. Those portions remain subject to the applicable upstream fMRIPrep copyright and license terms.
+
+MARSS is used as an external dependency and is not redistributed by this repository.
+
+For additional provenance and third-party attribution information, see [`NOTICE.md`](NOTICE.md).
+
+This repository is an independent graduate research project and is not an official fMRIPrep, NiPreps, or MARSS distribution.
+
+---
+
 ## References
 
 - fMRIPrep documentation and source code
