@@ -6,25 +6,21 @@ The MARSS–fMRIPrep integration was evaluated primarily as a workflow-engineeri
 
 The preserved development evidence supports successful **workflow integration**, while the preserved end-to-end run does **not** demonstrate execution of the MARSS regression algorithm itself.
 
-## Results
+## Evidence Matrix
 
-| Component | Validation Result |
-|---|---|
-| fMRIPrep version | 20.2.3 |
-| MARSS enable/disable configuration | Confirmed |
-| `--use-marss` CLI option | Confirmed |
-| `--marss-mb` CLI option | Confirmed |
-| MB-required validation | Confirmed |
-| Dedicated `bold_marss_wf` workflow | Confirmed |
-| Nipype `marss_node` creation | Confirmed |
-| BOLD-to-MARSS workflow connection | Confirmed after debugging |
-| MARSS output routed downstream | Confirmed |
-| MARSS output supplied to motion-correction processing | Confirmed |
-| End-to-end fMRIPrep completion | Confirmed |
-| MARSS import in preserved May 19 batch run | Failed |
-| Development-wrapper behavior after import failure | Passthrough |
-| Actual MARSS regression in preserved May 19 run | Not demonstrated |
-| Scientific artifact-reduction performance | Not evaluated |
+| Validation Question | Preserved Evidence | Observation | Conclusion |
+|---|---|---|---|
+| Was MARSS configuration integrated? | fMRIPrep configuration and CLI modifications | `use_marss`, `marss_mb`, `--use-marss`, and `--marss-mb` are present | Configuration interface implemented |
+| Was a MARSS workflow stage created? | Nipype workflow definition and runtime node hierarchy | `bold_marss_wf.marss_node` was instantiated | Custom workflow stage integrated |
+| Was the BOLD input initially connected correctly? | Earlier crash report | `in_file = <undefined>` with `MB = 6` | Initial workflow wiring was incomplete |
+| Was the wiring subsequently corrected? | Later Nipype execution evidence | `marss_node` received and executed on the BOLD workflow path | BOLD-to-MARSS connection corrected |
+| Did the historical batch environment import MARSS? | May 19 runtime output | `No module named 'MARSS'` | MARSS import failed in that run |
+| What happened after the import failure? | Development-wrapper runtime output | Passthrough copy created `marss_bold.nii.gz` | Workflow interface continued without MARSS regression |
+| Did downstream processing consume the MARSS-stage output? | Downstream Nipype/FSL execution paths | Motion-correction processing consumed `marss_bold.nii.gz` | MARSS-stage output was propagated downstream |
+| Did the surrounding fMRIPrep workflow complete? | May 19 batch stdout | `fMRIPrep finished successfully!` | End-to-end integration path completed |
+| Was the preserved output altered by MARSS? | Checksum comparison | Examined `marss_bold.nii.gz` and original BOLD had matching MD5 checksums | Preserved output was consistent with passthrough behavior |
+| Was MARSS regression demonstrated in that run? | Import failure plus checksum evidence | External MARSS algorithm did not execute | No |
+| Was scientific artifact reduction evaluated? | Preserved validation scope | No algorithm-level image-quality comparison was performed | Not evaluated |
 
 ## Development Progression
 
@@ -77,7 +73,7 @@ Therefore, the successful pipeline completion demonstrates integration of the MA
 
 ## Environment Follow-Up
 
-Later reproducibility investigation confirmed that the MARSS Python entry point is compatible with the integration wrapper.
+Later reproducibility investigation confirmed that the MARSS entry point accepts the integration wrapper's expected arguments. Source inspection also showed that MARSS creates a run-specific working directory and writes the corrected BOLD image using a `za` filename prefix.
 
 The observed interface was:
 

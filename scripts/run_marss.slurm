@@ -24,6 +24,37 @@ module load afni
 module load c3d
 
 # -------------------------------------------------------------------------
+# Environment preflight validation
+# -------------------------------------------------------------------------
+
+echo "Running MARSS environment preflight check..."
+
+python - <<'PY'
+import sys
+
+print(f"Python executable: {sys.executable}")
+print(f"Python version: {sys.version.split()[0]}")
+
+try:
+    from MARSS.MARSS import MARSS_main
+except ImportError as exc:
+    raise SystemExit(
+        "ERROR: MARSS is not importable in the batch-job Python environment. "
+        f"Aborting before fMRIPrep execution. Details: {exc}"
+    )
+
+print("MARSS import: OK")
+print(f"MARSS entry point: {MARSS_main.__module__}.{MARSS_main.__name__}")
+PY
+
+if [ $? -ne 0 ]; then
+    echo "MARSS preflight validation failed."
+    exit 1
+fi
+
+echo "MARSS environment preflight validation passed."
+
+# -------------------------------------------------------------------------
 # Dataset configuration
 # -------------------------------------------------------------------------
 

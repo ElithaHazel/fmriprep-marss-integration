@@ -48,26 +48,32 @@ def marss_apply(in_file, MB):
 
     MARSS_main(in_file, MB, out_dir)
 
-    produced = [
-        filename
-        for filename in os.listdir(out_dir)
-        if filename.endswith((".nii", ".nii.gz"))
-        and filename != "marss_bold.nii.gz"
-    ]
+    # MARSS creates a run-specific directory named from the input file.
+    run_name = os.path.splitext(os.path.basename(in_file))[0]
+    run_dir = os.path.join(out_dir, run_name)
 
-    if not produced:
-        # MARSS may already have produced the standardized filename.
-        if os.path.exists(final_output):
-            return final_output
-
+    if not os.path.isdir(run_dir):
         raise RuntimeError(
-            "MARSS completed without producing a NIfTI output."
+            f"MARSS completed without creating the expected run directory: "
+            f"{run_dir}"
         )
 
-    produced_path = os.path.join(out_dir, produced[0])
+    # MARSS names the corrected BOLD image with a 'za' prefix.
+    corrected_outputs = sorted(
+        filename
+        for filename in os.listdir(run_dir)
+        if filename.startswith("za")
+        and filename.endswith((".nii", ".nii.gz"))
+    )
 
-    if os.path.abspath(produced_path) != os.path.abspath(final_output):
-        shutil.move(produced_path, final_output)
+    if len(corrected_outputs) != 1:
+        raise RuntimeError(
+            "Expected exactly one MARSS-corrected BOLD image with a 'za' "
+            f"prefix, but found {len(corrected_outputs)}."
+        )
+
+    corrected_output = os.path.join(run_dir, corrected_outputs[0])
+    shutil.copy2(corrected_output, final_output)
 
     return final_output
 

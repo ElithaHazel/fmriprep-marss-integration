@@ -1,0 +1,14 @@
+# Normalize text files in the repository.
+* text=auto
+
+# Linux/HPC and source files must use LF line endings.
+*.py text eol=lf
+*.sh text eol=lf
+*.slurm text eol=lf
+*.patch text eol=lf
+
+# Documentation and configuration.
+*.md text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf

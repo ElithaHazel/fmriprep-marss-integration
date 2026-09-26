@@ -113,7 +113,7 @@ bold_marss_wf
           bold_hmc_wf
 ```
 
-When MARSS is disabled, the standard fMRIPrep processing path is retained.
+The intended optional design preserves the standard fMRIPrep processing path when MARSS is disabled. However, the preserved historical patch was validated on the MARSS-enabled path only and contains a documented disabled-path implementation limitation; see [`validation.md`](validation.md).
 
 ## Development Architecture
 

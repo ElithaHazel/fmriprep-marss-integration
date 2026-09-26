@@ -371,6 +371,94 @@ This keeps the repository portable and avoids publishing environment-specific fi
 
 ---
 
+## Reproducing the Integration
+
+This repository is intended to reproduce the MARSS–fMRIPrep **workflow
+integration** developed against fMRIPrep 20.2.3. Reproducing the historical
+integration does not by itself reproduce or validate the scientific behavior
+of MARSS.
+
+### Prerequisites
+
+A reproduction environment should provide:
+
+- fMRIPrep 20.2.3;
+- a Python environment compatible with that fMRIPrep release;
+- Nipype and the neuroimaging dependencies required by fMRIPrep;
+- an accessible MARSS Python installation exposing
+  `MARSS.MARSS.MARSS_main`;
+- a valid BIDS dataset;
+- a valid FreeSurfer license; and
+- a Linux execution environment, with SLURM if using the provided HPC example.
+
+### Applying the Historical Patches
+
+The files under `patches/` were generated relative to a clean fMRIPrep 20.2.3
+distribution. From the root of an unpacked fMRIPrep 20.2.3 source tree, the
+integration patches can be checked before application using:
+
+```bash
+patch --dry-run -p1 < /path/to/config.patch
+patch --dry-run -p1 < /path/to/cli-parser.patch
+patch --dry-run -p1 < /path/to/marss-workflow.patch
+patch --dry-run -p1 < /path/to/bold-workflow.patch
+
+```
+
+If the dry runs succeed, remove `--dry-run` to apply the patches.
+
+The preserved patches reproduce the historical development implementation,
+including its documented limitations. They should not be interpreted as a
+production-ready extension of current fMRIPrep releases.
+
+### Verifying MARSS Availability
+
+Before starting fMRIPrep, verify MARSS using the same Python interpreter that
+will execute the workflow:
+
+```bash
+python -c "from MARSS.MARSS import MARSS_main; print('MARSS import OK')"
+```
+
+The example SLURM script under `scripts/` performs this check automatically
+and aborts before fMRIPrep execution if MARSS is unavailable.
+
+### Running
+
+After replacing the environment, dataset, output, work-directory, and
+FreeSurfer-license placeholders in:
+
+```text
+scripts/run_marss.slurm
+```
+
+the example can be submitted with:
+
+```bash
+sbatch scripts/run_marss.slurm
+```
+
+For non-SLURM environments, the equivalent fMRIPrep invocation requires:
+
+```text
+--use-marss --marss-mb <MB>
+```
+
+where `<MB>` is the multiband acceleration factor for the acquisition.
+
+### Validation Boundary
+
+A successful reproduction should distinguish between:
+
+1. successful construction and execution of the MARSS workflow interface;
+2. successful execution of the external MARSS algorithm; and
+3. scientific evaluation of the resulting neuroimaging data.
+
+These are separate validation levels. Successful fMRIPrep completion alone
+does not establish MARSS algorithm execution or scientific efficacy.
+
+---
+
 ## Future Validation
 
 Algorithm-level validation should be performed using a controlled batch environment in which MARSS is explicitly available to the same Python interpreter used by fMRIPrep.

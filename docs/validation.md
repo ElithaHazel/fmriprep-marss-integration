@@ -296,6 +296,26 @@ This change separates successful MARSS execution from integration-only testing a
 
 ---
 
+## Known Historical Implementation Limitation
+
+The preserved patches represent the development implementation used during
+the MARSS-enabled integration work and should not be interpreted as a
+production-hardened extension of fMRIPrep.
+
+In particular, the historical `bold-workflow.patch` instantiates `marss_wf`
+only when MARSS is enabled, while the workflow connection list contains a
+reference to `marss_wf`. The MARSS-enabled path was the path exercised during
+the documented integration validation; the MARSS-disabled path was not
+independently validated in the preserved implementation.
+
+A production-ready implementation should guard MARSS-specific workflow
+construction and connections so that disabling MARSS leaves the standard
+fMRIPrep BOLD processing graph unchanged.
+
+This limitation does not alter the documented result of the MARSS-enabled
+validation run, but it defines an additional requirement for a fully hardened
+optional integration.
+
 ## Remaining Validation Work
 
 A complete algorithm-level validation would require a new controlled run in an environment where MARSS is explicitly available to the batch-job Python interpreter.
